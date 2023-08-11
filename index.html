@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>修修仙 - 境界系统</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<style>
+    #title {
+    font-size: 36px;
+    text-align: center;
+    margin-top: 40px;
+  }
+  #counter {
+    font-size: 24px;
+    text-align: center;
+    margin-top: 20px;
+  }
+  #realm {
+    font-size: 24px;
+    text-align: center;
+    margin-top: 20px;
+  }
+  #upgrade-info {
+    font-size: 18px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  #skills {
+    font-size: 18px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  #sign-in {
+    font-size: 18px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  #practice-button {
+    display: block;
+    margin: 40px auto;
+    padding: 15px 30px;
+    font-size: 20px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+  #sign-in-button {
+    display: block;
+    margin: 10px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #27ae60;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+  }
+  #offline-progress {
+    font-size: 18px;
+    text-align: center;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div id="title">修修仙</div>
+<div id="counter">修为: <span id="count">0</span></div>
+<div id="realm">境界: <span id="realm-level">初学者</span></div>
+<div id="upgrade-info">升级所需修为: <span id="upgrade-requirement">10</span></div>
+<div id="skills">
+  <button id="speed-up-skill">修炼加速技能</button>
+  <span id="skill-level">等级: 0</span>
+</div>
+<div id="sign-in">
+  <button id="sign-in-button">每日签到</button>
+</div>
+<div id="offline-progress">
+  <button id="offline-practice-button">离线修炼</button>
+  <span id="offline-progress-info">已修炼: 0 修为</span>
+</div>
+<button id="practice-button">修炼</button>
+
+<!-- 弹出介绍框 -->
+<div id="overlay">
+  <div id="popup">
+    <h2>欢迎来到修修仙！
+
+在遥远的古代，存在着一个神秘而神奇的世界，被称为“修修仙界”。这个世界充满了灵气与奇遇，其间孕育了众多的修仙者，他们以修炼为目标，不断追求着卓越的境界与力量。
+
+修修仙界由九大领域组成，每个领域都拥有独特的灵气与资源，从浩瀚的大地到高悬的天空，从幽深的森林到险恶的沙漠，每个地域都蕴含着不同的仙法与机缘，等待着勇者的探索。
+
+在这个世界中，修仙被视为一条通往永恒的道路。修仙者通过修炼积累修为，提升境界，拥有了凌驾于常人之上的力量与感知。境界分为初学者、修士、修仙者、仙人、天仙、地仙、神仙等多个层次，每一次的境界提升，都伴随着强大的能力和更深奥的法则。
+
+然而，修修仙界也充满了未知与危险。妖兽、邪灵、神秘的诡异现象，都是修仙者在探索的过程中所面临的挑战。而修仙者的修为也需要不断地与天地间的规则相融合，探索灵气的奥秘，从而达到更高的境界。
+
+在修修仙界中，还有一项传统的仙术技能，叫做“修炼加速技能”。这种技能可以让修仙者在修炼时加速积累修为，从而更快地突破境界，成为修仙界的强者。
+
+你，作为一名年轻的修仙者，将踏上这段充满挑战和奇遇的修炼之旅。你的目标是不断提升境界，探索世界的奥秘，与其他修仙者一同竞技，成为真正的修仙大师。修修仙界等待着你的勇敢探索，开启一段属于你的修仙传奇。
+
+希望这个背景介绍能够为你的游戏增添一些丰富的元素和深度。</h2>
+    <p>在这个游戏中，您将扮演一名修仙者，不断修炼提升境界，探索修仙世界的奥秘。</p>
+    <p>通过点击“修炼”按钮来累积修为，升级境界，解锁更多的修仙技能，挑战更高的境界。</p>
+    <p>在签到、技能加成和离线修炼等功能的帮助下，您可以更快地提升修为，成为一名强大的修仙大师。</p>
+    <p>开始您的修仙之旅吧！</p>
+    <button id="close-popup">开始游戏</button>
+  </div>
+</div>
+
+<!-- 玩家排行榜 -->
+<div id="leaderboard">
+  <h2>玩家排行榜</h2>
+  <ol id="leaderboard-list"></ol>
+</div>
+
+<script>
+  var count = parseInt(localStorage.getItem("count")) || 0;
+  var realmLevel = localStorage.getItem("realmLevel") || "初学者";
+  var upgradeRequirement = parseInt(localStorage.getItem("upgradeRequirement")) || 10;
+  var successRate = 0.5;
+  var skillLevel = parseInt(localStorage.getItem("skillLevel")) || 0;
+  var lastSignInDay = parseInt(localStorage.getItem("lastSignInDay")) || -1;
+  var signInStreak = parseInt(localStorage.getItem("signInStreak")) || 0;
+  var offlineProgress = parseInt(localStorage.getItem("offlineProgress")) || 0;
+
+  var counter = document.getElementById("count");
+  var realmCounter = document.getElementById("realm-level");
+  var upgradeInfo = document.getElementById("upgrade-requirement");
+  var skillButton = document.getElementById("speed-up-skill");
+  var skillLevelDisplay = document.getElementById("skill-level");
+  var signInButton = document.getElementById("sign-in-button");
+  var practiceButton = document.getElementById("practice-button");
+  var offlinePracticeButton = document.getElementById("offline-practice-button");
+  var offlineProgressInfo = document.getElementById("offline-progress-info");
+  
+  var overlay = document.getElementById("overlay");
+  var closePopupButton = document.getElementById("close-popup");
+
+  var leaderboardList = document.getElementById("leaderboard-list");
+
+  closePopupButton.addEventListener("click", function() {
+    overlay.style.display = "none";
+  });
+
+  // 初始化玩家排行榜
+  function initLeaderboard() {
+    var leaderboardData = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    updateLeaderboard(leaderboardData);
+  }
+
+  // 更新玩家排行榜
+  function updateLeaderboard(data) {
+    leaderboardList.innerHTML = "";
+    data.forEach(function(entry, index) {
+      var listItem = document.createElement("li");
+      listItem.textContent = "玩家 #" + (index + 1) + ": " + entry + " 修为";
+      leaderboardList.appendChild(listItem);
+    });
+  }
+
+  // 添加当前玩家分数到排行榜
+  function addToLeaderboard(score) {
+    var leaderboardData = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    leaderboardData.push(score);
+    leaderboardData.sort(function(a, b) {
+      return b - a;
+    });
+    if (leaderboardData.length > 10) {
+      leaderboardData.pop();
+    }
+    localStorage.setItem("leaderboard", JSON.stringify(leaderboardData));
+    updateLeaderboard(leaderboardData);
+  }
+
+  initLeaderboard();
+
+  updateUI();
+
+  // 修炼按钮点击事件
+  practiceButton.addEventListener("click", function() {
+    count += 1 + skillLevel;
+    counter.textContent = count;
+
+    if (count >= upgradeRequirement) {
+      if (Math.random() < successRate) {
+        upgradeRealm();
+      } else {
+        count = Math.floor(count * 0.8);
+      }
+      updateUI();
+    }
+
+    updateLocalStorage();
+    updateUI();
+  });
+
+  // 修炼加速技能点击事件
+  skillButton.addEventListener("click", function() {
+    if (count >= 50 * (skillLevel + 1)) {
+      skillLevel++;
+      updateLocalStorage();
+      updateUI();
+    }
+  });
+
+  // 每日签到点击事件
+  signInButton.addEventListener("click", function() {
+    var today = new Date().getDate();
+    if (today !== lastSignInDay) {
+      var signInReward = 10 + signInStreak * 5;
+      count += signInReward;
+      lastSignInDay = today;
+      signInStreak++;
+      updateLocalStorage();
+      updateUI();
+    }
+  });
+
+  // 离线修炼按钮点击事件
+  offlinePracticeButton.addEventListener("click", function() {
+    var offlineMultiplier = Math.pow(2, skillLevel);
+    offlineProgress += 10 * offlineMultiplier;
+    updateLocalStorage();
+    updateUI();
+  });
+
+  // 境界升级函数
+  function upgradeRealm() {
+    if (realmLevel === "初学者") {
+      realmLevel = "新手修士";
+      upgradeRequirement = 100;
+    } else if (realmLevel === "新手修士") {
+      realmLevel = "初级修仙者";
+      upgradeRequirement = 1000;
+    } else if (realmLevel === "初级修仙者") {
+      realmLevel = "中级修仙者";
+      upgradeRequirement = 10000;
+    } else if (realmLevel === "中级修仙者") {
+      realmLevel = "高级修仙者";
+      upgradeRequirement = 100000;
+    } else if (realmLevel === "高级修仙者") {
+      realmLevel = "元婴境界";
+      upgradeRequirement = 1000000;
+    } else if (realmLevel === "元婴境界") {
+      realmLevel = "化神境界";
+      upgradeRequirement = 10000000;
+    } else if (realmLevel === "化神境界") {
+      realmLevel = "天仙境界";
+      upgradeRequirement = 100000000;
+    } else if (realmLevel === "天仙境界") {
+      realmLevel = "地仙境界";
+      upgradeRequirement = 1000000000;
+    } else if (realmLevel === "地仙境界") {
+      realmLevel = "神仙境界";
+      upgradeRequirement = 10000000000;
+    }
+    updateLocalStorage();
+    updateUI();
+  }
+
+  // 更新本地存储
+  function updateLocalStorage() {
+    localStorage.setItem("count", count);
+    localStorage.setItem("realmLevel", realmLevel);
+    localStorage.setItem("upgradeRequirement", upgradeRequirement);
+    localStorage.setItem("skillLevel", skillLevel);
+    localStorage.setItem("lastSignInDay", lastSignInDay);
+    localStorage.setItem("signInStreak", signInStreak);
+    localStorage.setItem("offlineProgress", offlineProgress);
+  }
+
+  // 更新界面显示
+  function updateUI() {
+    counter.textContent = count;
+    realmCounter.textContent = realmLevel;
+    upgradeInfo.textContent = upgradeRequirement;
+    skillLevelDisplay.textContent = "等级: " + skillLevel;
+    skillButton.disabled = count < 50 * (skillLevel + 1);
+    signInButton.disabled = new Date().getDate() === lastSignInDay;
+    offlineProgressInfo.textContent = "已修炼: " + offlineProgress + " 修为";
+  }
+</script>
+</body>
+</html>
